@@ -23,7 +23,7 @@ gsutil mb -l US gs://dejavu-1987-staging
 
 # Launch the Dataflow Pipeline
 cd gcp-twitter-analytics/dataflow-pubsub-to-bigquery/
-mvn -Pdataflow-runner compile exec:java -Dexec.mainClass=com.example.dataflow.TwitterProcessor -Dexec.args="--project=dejavu-1987 --stagingLocation=gs://dejavu-1987-staging"
+mvn compile exec:java -Dexec.mainClass=com.example.dataflow.TwitterProcessor -Dexec.args="--streaming --project=dejavu-1987 --stagingLocation=gs://dejavu-1987-staging"
 
 # Create an App Engine
 gcloud app create --project=dejavu-1987 --region=us-west2
