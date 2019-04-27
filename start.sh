@@ -27,7 +27,7 @@ gsutil mb -l US gs://${PROJECT_ID}-output
 
 # Launch the Dataflow Pipeline
 cd gcp-twitter-analytics/dataflow-pubsub-to-bigquery/
-mvn -Pdataflow-runner compile exec:java -Dexec.mainClass=org.apache.beam.examples.WordCount -Dexec.args="--project=acikalin --stagingLocation=gs://acikalin-staging --output=gs://acikalin-output --runner=DataflowRunner"
+mvn -Pdataflow-runner compile exec:java -Dexec.mainClass=com.example.dataflow.TwitterProcessor -Dexec.args="--project=acikalin --stagingLocation=gs://acikalin-staging --output=gs://acikalin-output --runner=DataflowRunner"
 
 # Create an App Engine
 gcloud app create --project=${PROJECT_ID} --region=us-west2
