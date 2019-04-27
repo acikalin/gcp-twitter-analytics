@@ -143,7 +143,7 @@ public class TwitterProcessor {
         // Create a TableReference for the destination table
         TableReference tableReference = new TableReference();
         tableReference.setProjectId(projectId);
-        tableReference.setDatasetId("tweets_analytics");
+        tableReference.setDatasetId("twitter_analytics");
         tableReference.setTableId("tweets_raw");
 
         // Write tweets to BigQuery
@@ -159,7 +159,7 @@ public class TwitterProcessor {
         // Create a TableReference for the destination table
         TableReference filteredTableReference = new TableReference();
         filteredTableReference.setProjectId(projectId);
-        filteredTableReference.setDatasetId("tweets");
+        filteredTableReference.setDatasetId("twitter_analytics");
         filteredTableReference.setTableId("tweets_sentiment");
 
         // Write tweets to BigQuery
