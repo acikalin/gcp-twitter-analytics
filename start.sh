@@ -33,4 +33,4 @@ gcloud app create --project=acikalin --region=us-west2
 #cd ..
 cd gcp-twitter-analytics/springboot-appengine-standard/
 mvn clean package
-mvn mvn appengine:deploy
+mvn appengine:deploy
