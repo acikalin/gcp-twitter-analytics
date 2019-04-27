@@ -38,7 +38,7 @@ public class HelloworldController {
             "      GROUP BY word\n" +
             "      HAVING NOT REGEXP_CONTAINS(word, r'^\\d+$')\n" +
             "    ) AS words\n" +
-            "  FROM `tweets.tweets`\n" +
+            "  FROM `twitter.tweets`\n" +
             "),\n" +
             "words_in_corpus AS (\n" +
             "  SELECT word, SUM(cnt) AS cnt\n" +
