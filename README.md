@@ -13,9 +13,11 @@ The repository contains a bash script that automates most of the work. However, 
 
 - Create a new Google Cloud Platform project (see https://support.google.com/cloud/answer/6251787?hl=en for instructions).
 - Enable the Natural Language API from the Cloud Console (https://console.cloud.google.com/apis/api/language.googleapis.com/overview).
+- Enable the PubSub from the Cloud Console (https://console.cloud.google.com/cloudpubsub).
+- Enable the DataFlow from the Cloud Console (https://console.cloud.google.com/dataflow).
+- Create a new App Engine Java Application (https://console.cloud.google.com/appengine).
 - Open Google Cloud Shell.
 - Within Cloud Shell, clone the Git Repository: `git clone https://github.com/acikalin/gcp-twitter-analytics.git gcp-twitter-analytics`.
-- Edit twitter-stream.yaml. Set the Twitter authentication information to the values you noted when setting up your Twitter application (CONSUMERKEY,CONSUMERSECRET, ACCESSTOKEN, and ACCESSTOKENSEC).
 - [Create a Twitter application](https://apps.twitter.com/app/new) and paste the required information in the gcp-twitter-analytics/k8s-twitter-to-pubsub/twitter-stream.yaml file. Use your preferred text editor, like `vi` or `nano`: `nano gcp-twitter-analytics/k8s-twitter-to-pubsub/twitter-stream.yaml`
 - launch the start.sh file to provision and start the processing pipeline: `bash gcp-twitter-analytics/start.sh`.
 
