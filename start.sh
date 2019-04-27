@@ -1,7 +1,7 @@
 #!/bin/bash
 
 PROJECT_ID=acikalin
-gcloud config set project ${PROJECT_ID}
+gcloud config set project acikalin
 gcloud config set compute/zone us-west1-a
 gcloud config set compute/region us-west1
 
@@ -21,13 +21,11 @@ kubectl create -f gcp-twitter-analytics/k8s-twitter-to-pubsub/twitter-stream.yam
 bq mk twitter
 
 # Create a staging bucket
-gsutil mb -l US gs://${PROJECT_ID}-staging
-# Create a output bucket
-gsutil mb -l US gs://${PROJECT_ID}-output
+gsutil mb gs://acikalin-staging
 
 # Launch the Dataflow Pipeline
 cd gcp-twitter-analytics/dataflow-pubsub-to-bigquery/
-mvn -Pdataflow-runner compile exec:java -Dexec.mainClass=com.example.dataflow.TwitterProcessor -Dexec.args="--project=acikalin --stagingLocation=gs://acikalin-staging --runner=DataflowRunner"
+mvn compile exec:java -Dexec.mainClass=com.example.dataflow.TwitterProcessor -Dexec.args="--streaming --project=acikalin --stagingLocation=gs://acikalin-staging"
 
 # Create an App Engine
 gcloud app create --project=${PROJECT_ID} --region=us-west2

@@ -8,8 +8,6 @@ import java.util.Date;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO;
-import org.apache.beam.sdk.io.gcp.pubsub.PubsubIO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,14 +26,18 @@ import com.google.api.services.language.v1beta1.model.AnalyzeSentimentRequest;
 import com.google.api.services.language.v1beta1.model.AnalyzeSentimentResponse;
 import com.google.api.services.language.v1beta1.model.Document;
 import com.google.api.services.language.v1beta1.model.Sentiment;
-import org.apache.beam.sdk.Pipeline;
-import org.apache.beam.sdk.options.PipelineOptionsFactory;
-import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions;
-import org.apache.beam.runners.dataflow.options.DataflowPipelineWorkerPoolOptions.AutoscalingAlgorithmType;
-import org.apache.beam.runners.dataflow.DataflowRunner;
-import org.apache.beam.sdk.transforms.DoFn;
-import org.apache.beam.sdk.transforms.ParDo;
-import org.apache.beam.sdk.values.PCollection;
+import com.google.cloud.dataflow.sdk.Pipeline;
+import com.google.cloud.dataflow.sdk.io.BigQueryIO;
+import com.google.cloud.dataflow.sdk.io.PubsubIO;
+import com.google.cloud.dataflow.sdk.io.TextIO;
+import com.google.cloud.dataflow.sdk.options.DataflowPipelineOptions;
+import com.google.cloud.dataflow.sdk.options.DataflowPipelineWorkerPoolOptions.AutoscalingAlgorithmType;
+import com.google.cloud.dataflow.sdk.options.PipelineOptionsFactory;
+import com.google.cloud.dataflow.sdk.runners.DataflowPipelineRunner;
+import com.google.cloud.dataflow.sdk.runners.DirectPipelineRunner;
+import com.google.cloud.dataflow.sdk.transforms.DoFn;
+import com.google.cloud.dataflow.sdk.transforms.ParDo;
+import com.google.cloud.dataflow.sdk.values.PCollection;
 import com.google.common.collect.Sets;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -60,11 +62,12 @@ public class TwitterProcessor {
      * <p>
      * This method converts a String containing a JSON into a TableRow object
      * that can be inserted into a BigQuery table
+     *
      */
     private static final class DoFormat extends DoFn<String, TableRow> {
         private static final long serialVersionUID = 1L;
 
-        @ProcessElement
+        @Override
         public void processElement(DoFn<String, TableRow>.ProcessContext c) throws Exception {
             c.output(createTableRow(c.element()));
         }
@@ -76,14 +79,14 @@ public class TwitterProcessor {
     private static final class DoFilterAndProcess extends DoFn<String, String> {
         private static final long serialVersionUID = 1L;
 
-        @ProcessElement
+        @Override
         public void processElement(DoFn<String, String>.ProcessContext c) throws Exception {
             try {
                 JsonObject jsonTweet = new JsonParser().parse(c.element()).getAsJsonObject();
 
                 if (jsonTweet != null && jsonTweet.getAsJsonPrimitive("text") != null && jsonTweet.getAsJsonPrimitive("lang") != null) {
 
-                    if ((jsonTweet.getAsJsonPrimitive("text").getAsString().toLowerCase().contains("twitter")) && jsonTweet.getAsJsonPrimitive("lang").getAsString().equalsIgnoreCase("en")) {
+                    if (jsonTweet.getAsJsonPrimitive("lang").getAsString().equalsIgnoreCase("en")) {
 
                         LOG.info("Processing tweet: " + c.element());
 
@@ -111,7 +114,7 @@ public class TwitterProcessor {
 
         // Setup Dataflow options
         DataflowPipelineOptions options = PipelineOptionsFactory.fromArgs(args).withValidation().create().as(DataflowPipelineOptions.class);
-        options.setRunner(DataflowRunner.class);
+        options.setRunner(DataflowPipelineRunner.class);
         options.setAutoscalingAlgorithm(AutoscalingAlgorithmType.THROUGHPUT_BASED);
         options.setMaxNumWorkers(3);
 
@@ -132,51 +135,42 @@ public class TwitterProcessor {
 
         // Read tweets from Pub/Sub
         PCollection<String> tweets = null;
-        tweets = p.apply(PubsubIO.readStrings().fromTopic("projects/" + projectId + "/topics/twitter"));
+        tweets = p.apply(PubsubIO.Read.named("Read tweets from PubSub").topic("projects/" + projectId + "/topics/twitter"));
 
         // Format tweets for BigQuery
-        PCollection<TableRow> formattedTweets = tweets.apply(ParDo.of(new DoFormat()));
+        PCollection<TableRow> formattedTweets = tweets.apply(ParDo.named("Format tweets for BigQuery").of(new DoFormat()));
 
         // Create a TableReference for the destination table
         TableReference tableReference = new TableReference();
         tableReference.setProjectId(projectId);
-        tableReference.setDatasetId("twitter");
+        tableReference.setDatasetId("tweets_analytics");
         tableReference.setTableId("tweets_raw");
 
         // Write tweets to BigQuery
-        formattedTweets.apply(BigQueryIO
-                .writeTableRows()
-                .to(tableReference)
-                .withSchema(tweetsTableSchema)
-                .withCreateDisposition(BigQueryIO.Write.CreateDisposition.CREATE_IF_NEEDED)
-                .withWriteDisposition(BigQueryIO.Write.WriteDisposition.WRITE_APPEND)
-                .withoutValidation());
+        formattedTweets.apply(BigQueryIO.Write.named("Write tweets to BigQuery").to(tableReference).withSchema(tweetsTableSchema).withCreateDisposition(BigQueryIO.Write.CreateDisposition.CREATE_IF_NEEDED).withWriteDisposition(BigQueryIO.Write.WriteDisposition.WRITE_APPEND).withoutValidation());
 
         // Filter and annotate tweets with their sentiment from NL API
         // Note: if the pipeline is run as a batch pipeline, the filter condition is inverted
-        PCollection<String> filteredTweets = tweets.apply(ParDo.of(new DoFilterAndProcess()));
+        PCollection<String> filteredTweets = tweets.apply(ParDo.named("Filter and annotate tweets").of(new DoFilterAndProcess()));
 
         // Format tweets for BigQuery
-        PCollection<TableRow> filteredFormattedTweets = filteredTweets.apply(ParDo.of(new DoFormat()));
+        PCollection<TableRow> filteredFormattedTweets = filteredTweets.apply(ParDo.named("Format annotated tweets for BigQuery").of(new DoFormat()));
 
         // Create a TableReference for the destination table
         TableReference filteredTableReference = new TableReference();
         filteredTableReference.setProjectId(projectId);
-        filteredTableReference.setDatasetId("twitter");
+        filteredTableReference.setDatasetId("tweets");
         filteredTableReference.setTableId("tweets_sentiment");
 
         // Write tweets to BigQuery
-        filteredFormattedTweets.apply(BigQueryIO
-                .writeTableRows()
-                .to(filteredTableReference)
-                .withSchema(annotatedTweetsTableSchema)
-                .withCreateDisposition(BigQueryIO.Write.CreateDisposition.CREATE_IF_NEEDED)
-                .withWriteDisposition(BigQueryIO.Write.WriteDisposition.WRITE_APPEND));
+        filteredFormattedTweets.apply(BigQueryIO.Write.named("Write annotated tweets to BigQuery").to(filteredTableReference).withSchema(annotatedTweetsTableSchema).withCreateDisposition(BigQueryIO.Write.CreateDisposition.CREATE_IF_NEEDED).withWriteDisposition(BigQueryIO.Write.WriteDisposition.WRITE_APPEND));
 
         p.run();
     }
 
-
+    /**
+     * Connects to the Natural Language API using Application Default Credentials.
+     */
     private static CloudNaturalLanguageAPI getLanguageService() throws IOException, GeneralSecurityException {
         final GoogleCredential credential = GoogleCredential.getApplicationDefault().createScoped(CloudNaturalLanguageAPIScopes.all());
         JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
@@ -188,6 +182,9 @@ public class TwitterProcessor {
         }).setApplicationName(APPLICATION_NAME).build();
     }
 
+    /**
+     * Analyzes the sentiment of a text with the Natural Language API
+     */
     private static Sentiment analyzeSentiment(CloudNaturalLanguageAPI languageApi, String text) throws IOException {
         AnalyzeSentimentRequest request = new AnalyzeSentimentRequest().setDocument(new Document().setContent(text).setType("PLAIN_TEXT"));
         CloudNaturalLanguageAPI.Documents.AnalyzeSentiment analyze = languageApi.documents().analyzeSentiment(request);
@@ -196,6 +193,9 @@ public class TwitterProcessor {
         return response.getDocumentSentiment();
     }
 
+    /**
+     * Flattens nested JsonArrays
+     */
     private static JsonArray flatten(JsonElement el) {
         JsonArray result = new JsonArray();
         if (el.isJsonArray()) {
@@ -208,6 +208,9 @@ public class TwitterProcessor {
         return result;
     }
 
+    /**
+     * Does some processing on the JSON message describing the tweet
+     */
     private static JsonElement cleanup(JsonElement el) {
 
         SimpleDateFormat dateReader = new SimpleDateFormat("EEE MMM dd HH:mm:ss Z yyyy");
@@ -244,11 +247,15 @@ public class TwitterProcessor {
                 }
             }
 
+            // Remove ignored fields
+            // TODO: modify schema to include also these fields
             for (String key : IGNORED_FIELDS) {
                 if (objEl.has(key)) {
                     objEl.remove(key);
                 }
             }
+            // Remove fields marked for removal
+            // TODO: modify schema to include also these fields
             for (String key : toBeRemoved) {
                 objEl.remove(key);
             }
@@ -260,11 +267,17 @@ public class TwitterProcessor {
 
     }
 
+    /**
+     * Creates a TableRow object from its String JSON representation, using a JsonFactory
+     */
     private static TableRow createTableRow(String tweet) throws IOException {
         JsonObject jsonTweet = (JsonObject) cleanup(new JsonParser().parse(tweet).getAsJsonObject());
         return JacksonFactory.getDefaultInstance().fromString(jsonTweet.toString(), TableRow.class);
     }
 
+    /**
+     * Creates a TableSchema from its String JSON representation, using a JsonFactory
+     */
     private static TableSchema createTableSchema(String schema) throws IOException {
         return JacksonFactory.getDefaultInstance().fromString(schema, TableSchema.class);
     }

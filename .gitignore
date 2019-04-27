@@ -8,3 +8,4 @@ dataflow-pubsub-to-bigquery/target/maven-status/maven-compiler-plugin/compile/de
 dataflow-pubsub-to-bigquery/target/dataflow-pubsub-to-bigquery-bundled-0.1.jar
 dataflow-pubsub-to-bigquery/target/classes/org/apache/beam/example/TwitterProcessor$DoFormat.class
 dataflow-pubsub-to-bigquery/target/classes/org/apache/beam/example/TwitterProcessor$1.class
+dataflow-pubsub-to-bigquery/target/
