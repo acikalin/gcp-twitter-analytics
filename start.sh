@@ -1,5 +1,5 @@
 #!/bin/bash
-gcloud config set project dejavu-1987
+gcloud config set project dejavu-1987-238910
 gcloud config set compute/zone us-west1-a
 gcloud config set compute/region us-west1
 
@@ -10,7 +10,7 @@ gcloud beta pubsub topics create twitter
 gcloud container clusters create tweets --zone us-west1-a --scopes=bigquery,pubsub,storage-ro,compute-rw
 
 # Acquire the credentials to access the K8S Master
-gcloud container clusters get-credentials tweets --zone us-west1-a --project dejavu-1987
+gcloud container clusters get-credentials tweets --zone us-west1-a --project dejavu-1987-238910
 
 # Deploy our application on the cluster, within a ReplicationController
 kubectl create -f gcp-twitter-analytics/k8s-twitter-to-pubsub/twitter-stream.yaml
@@ -19,14 +19,14 @@ kubectl create -f gcp-twitter-analytics/k8s-twitter-to-pubsub/twitter-stream.yam
 bq mk twitter
 
 # Create a staging bucket
-gsutil mb -l US gs://dejavu-1987-staging
+gsutil mb -l US gs://dejavu-1987-238910-staging
 
 # Launch the Dataflow Pipeline
 cd gcp-twitter-analytics/dataflow-pubsub-to-bigquery/
-mvn compile exec:java -Dexec.mainClass=com.example.dataflow.TwitterProcessor -Dexec.args="--streaming --project=dejavu-1987 --stagingLocation=gs://dejavu-1987-staging"
+mvn compile exec:java -Dexec.mainClass=com.example.dataflow.TwitterProcessor -Dexec.args="--streaming --project=dejavu-1987-238910 --stagingLocation=gs://dejavu-1987-238910-staging"
 
 # Create an App Engine
-gcloud app create --project=dejavu-1987 --region=us-west2
+gcloud app create --project=dejavu-1987-238910 --region=us-west2
 # Launch the App Engine Show Data
 cd ..
 cd springboot-appengine-standard/
