@@ -7,9 +7,9 @@ import com.google.api.services.bigquery.model.TableFieldSchema;
 import com.google.cloud.language.v1.*;
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
+import net.minidev.json.parser.JSONParser;
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO;
 import org.apache.beam.sdk.io.gcp.pubsub.PubsubIO;
-import org.apache.beam.sdk.io.gcp.pubsub.PubsubMessage;
 import org.apache.beam.sdk.transforms.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,23 +40,24 @@ public class TwitterProcessor {
         options.setAutoscalingAlgorithm(AutoscalingAlgorithmType.THROUGHPUT_BASED);
         options.setMaxNumWorkers(3);
         String projectId = options.getProject();
-        LOG.info("TRLXXXXXXXX");
+
         Pipeline pipeline = Pipeline.create(options);
-        pipeline.apply("TweetsReadPubSub", PubsubIO.readMessagesWithAttributes().fromTopic("projects/" + projectId + "/topics/twitter"))
-                .apply("ConvertDataToTableRows", ParDo.of(new DoFn<PubsubMessage, TableRow>() {
+        pipeline.apply("TweetsReadPubSub", PubsubIO.readStrings().fromTopic("projects/" + projectId + "/topics/twitter"))
+                .apply("ConvertDataToTableRows", ParDo.of(new DoFn<String, TableRow>() {
                     @ProcessElement
                     public void processElement(ProcessContext c) {
-                        LOG.info("ProcessingXXXXX");
-                        LOG.info("EMRAHX: " + c.element());
                         TableRow row = new TableRow();
                         try {
-                            PubsubMessage message = c.element();
-                            if (message != null && message.getAttribute("text")!= null
-                                    && message.getAttribute("lang") != null) {
-                                String text = message.getAttribute("text");
-                                String lang = message.getAttribute("lang");
+                            LOG.info("TRLXYT: " + c.element());
+                            JSONParser parser = new JSONParser();
+                            Object obj = parser.parse(c.element());
+                            JSONObject jsonObject = (JSONObject) obj;
+                            String text = (String) jsonObject.get("text");
+                            String lang = (String) jsonObject.get("lang");
 
-                                if (lang.equalsIgnoreCase("en")) {
+                            if (obj != null && text!= null && lang != null) {
+
+                                if (lang.equalsIgnoreCase("en") && text.contains("rize")) {
 
                                     LOG.info("Processing tweet: " + c.element());
 
