@@ -102,11 +102,5 @@ if __name__ == '__main__':
         stream.sample()
     else:
         stream.filter(
-            track=['bigdata', 'kubernetes', 'bigquery', 'docker', 'google',
-                   'googlecloud', 'golang', 'dataflow',
-                   'containers', 'appengine', 'gcp', 'compute',
-                   'scalability', 'gigaom', 'news', 'tech', 'apple',
-                   'amazon', 'cluster', 'distributed', 'computing',
-                   'cloud', 'android', 'mobile', 'ios', 'iphone',
-                   'python', 'recode', 'techcrunch', 'timoreilly']
+            track=['Operation Olive Branch', 'Mega-Scheme', 'STAR Refinery', 'Ankara train collision']
         )
