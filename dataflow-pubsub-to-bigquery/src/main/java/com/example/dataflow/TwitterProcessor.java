@@ -46,6 +46,8 @@ public class TwitterProcessor {
                 .apply("ConvertDataToTableRows", ParDo.of(new DoFn<PubsubMessage, TableRow>() {
                     @ProcessElement
                     public void processElement(ProcessContext c) {
+                        LOG.info("ProcessingXXXXX");
+                        LOG.info("EMRAHX: " + c.element());
                         TableRow row = new TableRow();
                         try {
                             PubsubMessage message = c.element();
