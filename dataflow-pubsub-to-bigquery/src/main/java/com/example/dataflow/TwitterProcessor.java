@@ -9,6 +9,7 @@ import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO;
 import org.apache.beam.sdk.io.gcp.pubsub.PubsubIO;
+import org.apache.beam.sdk.io.gcp.pubsub.PubsubMessage;
 import org.apache.beam.sdk.transforms.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,8 +22,6 @@ import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions;
 import org.apache.beam.runners.dataflow.options.DataflowPipelineWorkerPoolOptions.AutoscalingAlgorithmType;
 import org.apache.beam.runners.dataflow.DataflowRunner;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 
 import com.google.cloud.language.v1.AnalyzeSyntaxRequest;
 import com.google.cloud.language.v1.Document.Type;
@@ -43,20 +42,19 @@ public class TwitterProcessor {
         String projectId = options.getProject();
 
         Pipeline pipeline = Pipeline.create(options);
-        pipeline.apply(PubsubIO.readStrings().fromTopic("projects/" + projectId + "/topics/twitter"))
-                .apply(ParDo.of(new DoFn<String, TableRow>() {
+        pipeline.apply("TweetsReadPubSub", PubsubIO.readMessagesWithAttributes().fromTopic("projects/" + projectId + "/topics/twitter"))
+                .apply("ConvertDataToTableRows", ParDo.of(new DoFn<PubsubMessage, TableRow>() {
                     @ProcessElement
                     public void processElement(ProcessContext c) {
                         TableRow row = new TableRow();
                         try {
-                            JsonObject jsonTweet = new JsonParser().parse(c.element()).getAsJsonObject();
-                            if (jsonTweet != null && jsonTweet.getAsJsonPrimitive("text") != null
-                                    && jsonTweet.getAsJsonPrimitive("lang") != null) {
-                                String text = jsonTweet.getAsJsonPrimitive("text").getAsString();
-                                String lang = jsonTweet.getAsJsonPrimitive("lang").getAsString();
+                            PubsubMessage message = c.element();
+                            if (message != null && message.getAttribute("text")!= null
+                                    && message.getAttribute("lang") != null) {
+                                String text = message.getAttribute("text");
+                                String lang = message.getAttribute("lang");
 
-                                if ((text.toLowerCase().contains("stark"))
-                                        && lang.equalsIgnoreCase("en")) {
+                                if (lang.equalsIgnoreCase("en")) {
 
                                     LOG.info("Processing tweet: " + c.element());
 
@@ -81,7 +79,7 @@ public class TwitterProcessor {
                         c.output(row);
                     }
                 }))
-                .apply(BigQueryIO
+                .apply("InsertToBigQuery", BigQueryIO
                         .writeTableRows()
                         .to(getTableReference(projectId))
                         .withSchema(getTableSchema())
