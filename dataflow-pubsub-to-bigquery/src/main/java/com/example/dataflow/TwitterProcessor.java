@@ -55,7 +55,7 @@ public class TwitterProcessor {
                                 String text = jsonTweet.getAsJsonPrimitive("text").getAsString();
                                 String lang = jsonTweet.getAsJsonPrimitive("lang").getAsString();
 
-                                if ((text.toLowerCase().contains("twitter"))
+                                if ((text.toLowerCase().contains("stark"))
                                         && lang.equalsIgnoreCase("en")) {
 
                                     LOG.info("Processing tweet: " + c.element());

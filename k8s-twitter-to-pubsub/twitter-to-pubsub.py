@@ -102,5 +102,5 @@ if __name__ == '__main__':
         stream.sample()
     else:
         stream.filter(
-            track=['Operation Olive Branch', 'Mega-Scheme', 'STAR Refinery', 'Ankara train collision']
+            track=['stark']
         )
