@@ -41,6 +41,8 @@ public class TwitterProcessor {
         options.setMaxNumWorkers(3);
         String projectId = options.getProject();
 
+        LOG.info("MERHABA");
+
         Pipeline pipeline = Pipeline.create(options);
         pipeline.apply("TweetsReadPubSub", PubsubIO.readStrings().fromTopic("projects/" + projectId + "/topics/twitter"))
                 .apply("ConvertDataToTableRows", ParDo.of(new DoFn<String, TableRow>() {
