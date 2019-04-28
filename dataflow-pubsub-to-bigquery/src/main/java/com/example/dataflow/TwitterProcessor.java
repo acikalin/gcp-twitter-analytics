@@ -41,7 +41,6 @@ public class TwitterProcessor {
         options.setAutoscalingAlgorithm(AutoscalingAlgorithmType.THROUGHPUT_BASED);
         options.setMaxNumWorkers(3);
         String projectId = options.getProject();
-        LOG.info("MERHABA");
         Pipeline pipeline = Pipeline.create(options);
         pipeline.apply("TweetsReadPubSub", PubsubIO.readStrings().fromTopic("projects/" + projectId + "/topics/twitter"))
                 .apply("ConvertDataToTableRows", ParDo.of(new DoFn<String, TableRow>() {
@@ -56,6 +55,7 @@ public class TwitterProcessor {
                                 if (jsonTweet.getAsJsonPrimitive("lang").getAsString().equalsIgnoreCase("en")) {
 
                                     LOG.info("Processing tweet: " + c.element());
+                                    LOG.info("ProcessingA1: " + jsonTweet.getAsJsonPrimitive("text").getAsString());
 
                                     Sentiment sentiment = analyzeSentiment(jsonTweet.getAsJsonPrimitive("text").getAsString());
                                     List<Token> tokens = analyzeSyntaxText(jsonTweet.getAsJsonPrimitive("text").getAsString());
@@ -70,13 +70,12 @@ public class TwitterProcessor {
                                             .set("syntax", jsonTokens.toJSONString())
                                             .set("score", sentiment.getScore())
                                             .set("magnitude", sentiment.getMagnitude());
-                                    c.output(row);
                                 }
                             }
                         } catch (Exception e) {
                             row.set("tweet_object", e.toString());
-                            c.output(row);
                         }
+                        c.output(row);
                     }
                 }))
                 .apply("InsertToBigQuery", BigQueryIO
