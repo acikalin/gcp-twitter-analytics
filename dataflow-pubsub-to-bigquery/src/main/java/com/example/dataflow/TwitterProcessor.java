@@ -47,15 +47,13 @@ public class TwitterProcessor {
                 .apply("ConvertDataToTableRows", ParDo.of(new DoFn<String, TableRow>() {
                     @ProcessElement
                     public void processElement(ProcessContext c) {
-                        LOG.info("FATMA");
                         TableRow row = new TableRow();
                         try {
-                            LOG.info("TRLXYT: " + c.element());
                             JsonObject jsonTweet = new JsonParser().parse(c.element()).getAsJsonObject();
 
                             if (jsonTweet != null && jsonTweet.getAsJsonPrimitive("text") != null && jsonTweet.getAsJsonPrimitive("lang") != null) {
 
-                                if ((jsonTweet.getAsJsonPrimitive("text").getAsString().toLowerCase().contains("umraniye")) && jsonTweet.getAsJsonPrimitive("lang").getAsString().equalsIgnoreCase("en")) {
+                                if (jsonTweet.getAsJsonPrimitive("lang").getAsString().equalsIgnoreCase("en")) {
 
                                     LOG.info("Processing tweet: " + c.element());
 
