@@ -40,7 +40,7 @@ public class TwitterProcessor {
         options.setAutoscalingAlgorithm(AutoscalingAlgorithmType.THROUGHPUT_BASED);
         options.setMaxNumWorkers(3);
         String projectId = options.getProject();
-
+        LOG.info("TRLXXXXXXXX");
         Pipeline pipeline = Pipeline.create(options);
         pipeline.apply("TweetsReadPubSub", PubsubIO.readMessagesWithAttributes().fromTopic("projects/" + projectId + "/topics/twitter"))
                 .apply("ConvertDataToTableRows", ParDo.of(new DoFn<PubsubMessage, TableRow>() {
