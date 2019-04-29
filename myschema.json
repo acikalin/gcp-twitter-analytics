@@ -7,12 +7,12 @@
       {
         "name": "partOfSpeech",
         "type": "STRING",
-        "mode": "REQUIRED"
+        "mode": "REPEATED"
       },
       {
         "name": "content",
         "type": "STRING",
-        "mode": "REQUIRED"
+        "mode": "REPEATED"
       }
     ]
   }
