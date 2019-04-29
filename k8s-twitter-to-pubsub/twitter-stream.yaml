@@ -19,7 +19,7 @@ spec:
               value: twitter-to-pubsub
             # Change this to your pubsub topic
             - name: PUBSUB_TOPIC
-              value: projects/acikalin21/topics/twitter
+              value: projects/acikalin44/topics/twitter
             # Change the following four settings to your twitter credentials
             # information.
             - name: CONSUMERKEY
@@ -30,3 +30,5 @@ spec:
               value: 148063212-p7kOnWMoMe3AaRZXzbP2Yuv1YY7dqxeNw7rHVqrw
             - name: ACCESSTOKENSEC
               value: 6pVLYXngQAPDMWczXTSIkHP0VDcWjDYuV0Xhqodg1aHTp
+            - name: TWSTREAMMODE
+              value: track
