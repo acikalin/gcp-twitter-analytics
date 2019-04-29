@@ -80,8 +80,7 @@ public class TwitterProcessor {
                                     jsonTokens.add(jsonToken);
                                 }
                                 LOG.info("OUTPUTXX: " + "tweet_object: " + c.element() + "syntax: " + jsonTokens.toJSONString() + "score" + sentiment.getScore() + "magnitude" + sentiment.getMagnitude());
-                                row.set("tweet_object", c.element())
-                                        .set("syntax", jsonTokens.toJSONString());
+                                row.set("syntax", jsonTokens.toJSONString());
                             }
 
                         } catch (Exception e) {
@@ -141,7 +140,6 @@ public class TwitterProcessor {
 
     private static TableSchema getTableSchema() {
         List<TableFieldSchema> fields = new ArrayList<>();
-        fields.add(new TableFieldSchema().setName("tweet_object").setType("STRING").setMode("REQUIRED"));
         fields.add(new TableFieldSchema().setName("syntax").setType("RECORD").setMode("REQUIRED").setMode("REPEATED")
                 .setFields(Arrays.asList(
                         new TableFieldSchema().setName("partOfSpeech").setType("STRING").setMode("REQUIRED"),

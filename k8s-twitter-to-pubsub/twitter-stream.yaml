@@ -19,7 +19,7 @@ spec:
               value: twitter-to-pubsub
             # Change this to your pubsub topic
             - name: PUBSUB_TOPIC
-              value: projects/acikalin007/topics/twitter
+              value: projects/acikalin008/topics/twitter
             # Change the following four settings to your twitter credentials
             # information.
             - name: CONSUMERKEY
