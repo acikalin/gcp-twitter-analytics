@@ -51,40 +51,45 @@ public class TwitterProcessor {
                     public void processElement(ProcessContext c) {
                         TableRow row = new TableRow();
                         try {
-
                             JsonObject jsonTweet = new JsonParser().parse(c.element()).getAsJsonObject();
 
-                            if (jsonTweet != null && jsonTweet.get("text") != null && jsonTweet.get("lang") != null) {
+                            if (jsonTweet != null
+                                    && (
+                                    jsonTweet.get("text") != null
+                                            && !jsonTweet.get("text").getAsString().isEmpty()
+                                            && jsonTweet.get("text").getAsString().toLowerCase().contains("besiktas"))
+                                    && (
+                                    jsonTweet.get("lang") != null
+                                            && !jsonTweet.get("lang").getAsString().isEmpty()
+                                            && jsonTweet.get("lang").getAsString().equalsIgnoreCase("en"))
+                            ) {
+                                Sentiment sentiment = analyzeSentiment(jsonTweet.get("text").getAsString());
+                                LOG.info("sentimentX: " + sentiment);
+                                List<Token> tokens = analyzeSyntaxText(jsonTweet.get("text").getAsString());
+                                LOG.info("tokensX: " + tokens.toString());
+                                JSONArray jsonTokens = new JSONArray();
+                                LOG.info("ESRA1");
 
-                                if ((jsonTweet.get("text").getAsString().toLowerCase().contains("besiktas")) && jsonTweet.get("lang").getAsString().equalsIgnoreCase("en")) {
+                                for (Token token : tokens) {
+                                    JSONObject jsonToken = new JSONObject();
+                                    LOG.info("partOfSpeechX: " + token.getPartOfSpeech().getTag());
+                                    LOG.info("contentX: " + token.getText().getContent());
 
-                                    Sentiment sentiment = analyzeSentiment(jsonTweet.get("text").getAsString());
-                                    LOG.info("sentimentX: " + sentiment);
-                                    List<Token> tokens = analyzeSyntaxText(jsonTweet.get("text").getAsString());
-                                    LOG.info("tokensX: " + tokens.toString());
-
-                                    JSONArray jsonTokens = new JSONArray();
-
-                                    for (Token token : tokens) {
-                                        JSONObject jsonToken = new JSONObject();
-                                        LOG.info("partOfSpeechX: " + token.getPartOfSpeech().getTag());
-                                        LOG.info("contentX: " + token.getText().getContent());
-
-                                        jsonToken.put("partOfSpeech", token.getPartOfSpeech().getTag());
-                                        jsonToken.put("content", token.getText().getContent());
-                                        jsonTokens.add(jsonToken);
-                                    }
-                                    LOG.info("OUTPUTXX: " + "tweet_object: " + c.element() + "syntax: " + jsonTokens.toJSONString() + "score" + sentiment.getScore() + "magnitude" + sentiment.getMagnitude());
-                                    row.set("tweet_object", c.element())
-                                            .set("syntax", jsonTokens.toJSONString())
-                                            .set("score", sentiment.getScore())
-                                            .set("magnitude", sentiment.getMagnitude());
+                                    jsonToken.put("partOfSpeech", token.getPartOfSpeech().getTag());
+                                    jsonToken.put("content", token.getText().getContent());
+                                    jsonTokens.add(jsonToken);
                                 }
+                                LOG.info("OUTPUTXX: " + "tweet_object: " + c.element() + "syntax: " + jsonTokens.toJSONString() + "score" + sentiment.getScore() + "magnitude" + sentiment.getMagnitude());
+                                row.set("tweet_object", c.element())
+                                        .set("syntax", jsonTokens.toJSONString())
+                                        .set("score", sentiment.getScore())
+                                        .set("magnitude", sentiment.getMagnitude());
                             }
+
                         } catch (Exception e) {
                             LOG.error("ERRORRRRRRR: " + e.toString());
                         }
-                        LOG.info("OUTPUT: " + row);
+                        LOG.info("OUTPUTTRL: " + row);
                         c.output(row);
                     }
                 }))

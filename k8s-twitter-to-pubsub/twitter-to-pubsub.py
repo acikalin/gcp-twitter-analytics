@@ -91,16 +91,5 @@ if __name__ == '__main__':
     auth = OAuthHandler(consumer_key, consumer_secret)
     auth.set_access_token(access_token, access_token_secret)
 
-    print 'stream mode is: %s' % os.environ['TWSTREAMMODE']
-
     stream = Stream(auth, listener)
-    # set up the streaming depending upon whether our mode is 'sample', which
-    # will sample the twitter public stream. If not 'sample', instead track
-    # the given set of keywords.
-    # This environment var is set in the 'twitter-stream.yaml' file.
-    if os.environ['TWSTREAMMODE'] == 'sample':
-        stream.sample()
-    else:
-        stream.filter(
-            track=['besiktas']
-        )
+    stream.filter(track=['besiktas'])
