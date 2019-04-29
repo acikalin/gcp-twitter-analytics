@@ -92,4 +92,4 @@ if __name__ == '__main__':
     auth.set_access_token(access_token, access_token_secret)
 
     stream = Stream(auth, listener)
-    stream.filter(track=['besiktas'])
+    stream.filter(track=['stark'])

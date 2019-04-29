@@ -50,6 +50,8 @@ public class TwitterProcessor {
                     @ProcessElement
                     public void processElement(ProcessContext c) {
                         TableRow row = new TableRow();
+                        LOG.info("SONUC: " + c.element());
+
                         try {
                             JsonObject jsonTweet = new JsonParser().parse(c.element()).getAsJsonObject();
 
@@ -57,7 +59,7 @@ public class TwitterProcessor {
                                     && (
                                     jsonTweet.get("text") != null
                                             && !jsonTweet.get("text").getAsString().isEmpty()
-                                            && jsonTweet.get("text").getAsString().toLowerCase().contains("besiktas"))
+                                            && jsonTweet.get("text").getAsString().toLowerCase().contains("stark"))
                                     && (
                                     jsonTweet.get("lang") != null
                                             && !jsonTweet.get("lang").getAsString().isEmpty()

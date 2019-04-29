@@ -32,7 +32,7 @@ def get_credentials():
     """Get the Google credentials needed to access our services."""
     credentials = GoogleCredentials.get_application_default()
     if credentials.create_scoped_required():
-            credentials = credentials.create_scoped(SCOPES)
+        credentials = credentials.create_scoped(SCOPES)
     return credentials
 
 def create_pubsub_client(credentials):
