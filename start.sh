@@ -25,7 +25,7 @@ gcloud config set compute/region us-west1
 #
 ## Launch the Dataflow Pipeline
 cd gcp-twitter-analytics/dataflow-pubsub-to-bigquery/
-mvn compile exec:java -Dexec.mainClass=com.example.dataflow.TwitterProcessor -Dexec.args="--streaming --project=$PROJECT_ID --stagingLocation=gs://$PROJECT_ID/staging  --output=gs://$PROJECT_ID/output"
+mvn compile exec:java -e -Dexec.mainClass=com.example.dataflow.TwitterProcessor -Dexec.args="--streaming --project=$PROJECT_ID --stagingLocation=gs://$PROJECT_ID/staging  --tempLocation=gs://$PROJECT_ID/tmp"
 ##
 ### Create an App Engine
 #gcloud app create --project=$PROJECT_ID --region=us-west2
