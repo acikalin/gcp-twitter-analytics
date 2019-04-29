@@ -59,15 +59,22 @@ public class TwitterProcessor {
                                 if ((jsonTweet.get("text").getAsString().toLowerCase().contains("besiktas")) && jsonTweet.get("lang").getAsString().equalsIgnoreCase("en")) {
 
                                     Sentiment sentiment = analyzeSentiment(jsonTweet.get("text").getAsString());
+                                    LOG.info("sentimentX: " + sentiment);
                                     List<Token> tokens = analyzeSyntaxText(jsonTweet.get("text").getAsString());
+                                    LOG.info("tokensX: " + tokens.toString());
+
                                     JSONArray jsonTokens = new JSONArray();
 
                                     for (Token token : tokens) {
                                         JSONObject jsonToken = new JSONObject();
+                                        LOG.info("partOfSpeechX: " + token.getPartOfSpeech().getTag());
+                                        LOG.info("contentX: " + token.getText().getContent());
+
                                         jsonToken.put("partOfSpeech", token.getPartOfSpeech().getTag());
                                         jsonToken.put("content", token.getText().getContent());
                                         jsonTokens.add(jsonToken);
                                     }
+                                    LOG.info("OUTPUTXX: " + "tweet_object: " + c.element() + "syntax: " + jsonTokens.toJSONString() + "score" + sentiment.getScore() + "magnitude" + sentiment.getMagnitude());
                                     row.set("tweet_object", c.element())
                                             .set("syntax", jsonTokens.toJSONString())
                                             .set("score", sentiment.getScore())
@@ -77,6 +84,7 @@ public class TwitterProcessor {
                         } catch (Exception e) {
                             LOG.error("ERRORRRRRRR: " + e.toString());
                         }
+                        LOG.info("OUTPUT: " + row);
                         c.output(row);
                     }
                 }))
