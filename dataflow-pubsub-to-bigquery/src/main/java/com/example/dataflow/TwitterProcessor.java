@@ -1,15 +1,15 @@
 package com.example.dataflow;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.api.services.bigquery.model.TableFieldSchema;
 import com.google.cloud.language.v1.*;
+import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO;
 import org.apache.beam.sdk.io.gcp.pubsub.PubsubIO;
-import org.apache.beam.sdk.io.gcp.testing.BigqueryClient;
 import org.apache.beam.sdk.transforms.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +31,7 @@ public class TwitterProcessor {
 
     private static final Logger LOG = LoggerFactory.getLogger(TwitterProcessor.class);
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
         DataflowPipelineOptions options = PipelineOptionsFactory
                 .fromArgs(args).withValidation()
                 .create()
@@ -47,7 +47,7 @@ public class TwitterProcessor {
                 .apply("ConvertDataToTableRows", ParDo.of(new DoFn<String, TableRow>() {
                     @ProcessElement
                     public void processElement(ProcessContext c) {
-                        TableRow outputRow = new TableRow();
+                        TableRow row = new TableRow();
                         try {
                             JsonObject jsonTweet = new JsonParser().parse(c.element()).getAsJsonObject();
 
@@ -62,27 +62,20 @@ public class TwitterProcessor {
                                             && jsonTweet.get("lang").getAsString().equalsIgnoreCase("en"))
                             ) {
                                 List<Token> tokens = analyzeSyntaxText(jsonTweet.get("text").getAsString());
-                                List<TableRow> surfaceFormList = new ArrayList();
-
-                                for (Token token : tokens){
-                                    TableRow nestedRow = new TableRow();
-                                    nestedRow.put("partOfSpeech", token.getPartOfSpeech().getTag());
-                                    nestedRow.put("content", token.getText().getContent());
-                                    surfaceFormList.add(nestedRow);
-                                }
-                                outputRow.set("syntax", surfaceFormList);
+                                String tokensJsonString = new Gson().toJson(tokens);
+                                row.set("tokens", tokensJsonString);
                             }
 
                         } catch (Exception e) {
                             LOG.error(e.toString());
                         }
-                        c.output(outputRow);
+                        c.output(row);
                     }
                 }))
                 .apply("InsertToBigQuery", BigQueryIO
                         .writeTableRows()
                         .to(getTableReference(projectId))
-                        .withSchema(getTableSchema(projectId))
+                        .withSchema(getTableSchema())
                         .withCreateDisposition(BigQueryIO.Write.CreateDisposition.CREATE_IF_NEEDED)
                         .withWriteDisposition(BigQueryIO.Write.WriteDisposition.WRITE_APPEND)
                         .withoutValidation());
@@ -112,10 +105,10 @@ public class TwitterProcessor {
         return tableReference;
     }
 
-    private static TableSchema getTableSchema(String projectId) throws IOException, InterruptedException {
-        return BigqueryClient
-                .getClient(projectId)
-                .getTableResource(projectId,"twitter","tweets_raw")
-                .getSchema();
+    private static TableSchema getTableSchema() {
+        List<TableFieldSchema> fields = new ArrayList<>();
+        fields.add(new TableFieldSchema().setName("tokens").setType("STRING").setMode("REQUIRED"));
+        ;
+        return new TableSchema().setFields(fields);
     }
 }
