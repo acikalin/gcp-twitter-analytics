@@ -1,10 +1,9 @@
 package com.example.dataflow;
 
-import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
-import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.services.bigquery.model.TableFieldSchema;
 import com.google.cloud.language.v1.*;
 import com.google.gson.JsonObject;
@@ -33,41 +32,8 @@ import com.google.cloud.language.v1.EncodingType;
 public class TwitterProcessor {
 
     private static final Logger LOG = LoggerFactory.getLogger(TwitterProcessor.class);
-    private final static String SCHEMA = "[\n" +
-            "    {\n" +
-            "        \"name\": \"tweet_object\",\n" +
-            "        \"type\": \"STRING\",\n" +
-            "        \"mode\": \"REQUIRED\"\n" +
-            "    },\n" +
-            "    {\n" +
-            "        \"name\": \"syntax\",\n" +
-            "        \"type\": \"RECORD\",\n" +
-            "        \"mode\": \"REQUIRED\",\n" +
-            "        \"fields\": [\n" +
-            "            {\n" +
-            "                \"name\": \"partOfSpeech\",\n" +
-            "                \"type\": \"STRING\",\n" +
-            "                \"mode\": \"REQUIRED\"\n" +
-            "            },\n" +
-            "            {\n" +
-            "                \"name\": \"content\",\n" +
-            "                \"type\": \"STRING\",\n" +
-            "                \"mode\": \"REQUIRED\"\n" +
-            "            }\n" +
-            "        ]\n" +
-            "    },\n" +
-            "    {\n" +
-            "        \"name\": \"score\",\n" +
-            "        \"type\": \"STRING\",\n" +
-            "        \"mode\": \"REQUIRED\"\n" +
-            "    },\n" +
-            "    {\n" +
-            "        \"name\": \"magnitude\",\n" +
-            "        \"type\": \"STRING\",\n" +
-            "        \"mode\": \"REQUIRED\"\n" +
-            "    }\n" +
-            "]";
-    public static void main(String[] args) throws IOException {
+
+    public static void main(String[] args) throws Exception {
         DataflowPipelineOptions options = PipelineOptionsFactory
                 .fromArgs(args).withValidation()
                 .create()
@@ -110,19 +76,18 @@ public class TwitterProcessor {
                                             .set("syntax", jsonTokens.toJSONString())
                                             .set("score", sentiment.getScore())
                                             .set("magnitude", sentiment.getMagnitude());
-                                    c.output(row);
                                 }
                             }
                         } catch (Exception e) {
-                            row.set("tweet_object", e.toString());
-                            c.output(row);
+                            LOG.error("ERRORRRRRRR: " + e.toString());
                         }
+                        c.output(row);
                     }
                 }))
                 .apply("InsertToBigQuery", BigQueryIO
                         .writeTableRows()
                         .to(getTableReference(projectId))
-                        .withSchema(createTableSchema(SCHEMA))
+                        .withSchema(getTableSchema())
                         .withCreateDisposition(BigQueryIO.Write.CreateDisposition.CREATE_IF_NEEDED)
                         .withWriteDisposition(BigQueryIO.Write.WriteDisposition.WRITE_APPEND)
                         .withoutValidation());
@@ -167,7 +132,16 @@ public class TwitterProcessor {
         return tableReference;
     }
 
-    private static TableSchema createTableSchema(String schema) throws IOException {
-        return JacksonFactory.getDefaultInstance().fromString(schema, TableSchema.class);
+    private static TableSchema getTableSchema() {
+        List<TableFieldSchema> fields = new ArrayList<>();
+        fields.add(new TableFieldSchema().setName("tweet_object").setType("STRING").setMode("REQUIRED"));
+        fields.add(new TableFieldSchema().setName("syntax").setType("RECORD").setMode("REQUIRED")
+                .setFields(Arrays.asList(
+                        new TableFieldSchema().setName("partOfSpeech").setType("STRING").setMode("REQUIRED"),
+                        new TableFieldSchema().setName("content").setType("STRING").setMode("REQUIRED")
+                )));
+        fields.add(new TableFieldSchema().setName("score").setType("FLOAT").setMode("REQUIRED"));
+        fields.add(new TableFieldSchema().setName("magnitude").setType("FLOAT").setMode("REQUIRED"));
+        return new TableSchema().setFields(fields);
     }
 }
