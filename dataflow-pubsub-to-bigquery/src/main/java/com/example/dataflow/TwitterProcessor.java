@@ -81,9 +81,7 @@ public class TwitterProcessor {
                                 }
                                 LOG.info("OUTPUTXX: " + "tweet_object: " + c.element() + "syntax: " + jsonTokens.toJSONString() + "score" + sentiment.getScore() + "magnitude" + sentiment.getMagnitude());
                                 row.set("tweet_object", c.element())
-                                        .set("syntax", jsonTokens.toJSONString())
-                                        .set("score", sentiment.getScore())
-                                        .set("magnitude", sentiment.getMagnitude());
+                                        .set("syntax", jsonTokens.toJSONString());
                             }
 
                         } catch (Exception e) {
@@ -149,8 +147,6 @@ public class TwitterProcessor {
                         new TableFieldSchema().setName("partOfSpeech").setType("STRING").setMode("REQUIRED"),
                         new TableFieldSchema().setName("content").setType("STRING").setMode("REQUIRED")
                 )));
-        fields.add(new TableFieldSchema().setName("score").setType("FLOAT").setMode("REQUIRED"));
-        fields.add(new TableFieldSchema().setName("magnitude").setType("FLOAT").setMode("REQUIRED"));
         return new TableSchema().setFields(fields);
     }
 }
