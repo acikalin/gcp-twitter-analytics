@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PROJECT_ID=acikalin009
+PROJECT_ID=acikalin0010
 gcloud config set project $PROJECT_ID
 gcloud config set compute/zone us-west1-a
 gcloud config set compute/region us-west1

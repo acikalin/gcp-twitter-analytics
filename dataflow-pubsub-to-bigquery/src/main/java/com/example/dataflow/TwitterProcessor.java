@@ -1,10 +1,8 @@
 package com.example.dataflow;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.io.IOException;
 import java.util.List;
 
-import com.google.api.services.bigquery.model.TableFieldSchema;
 import com.google.cloud.language.v1.*;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -12,6 +10,7 @@ import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO;
 import org.apache.beam.sdk.io.gcp.pubsub.PubsubIO;
+import org.apache.beam.sdk.io.gcp.testing.BigqueryClient;
 import org.apache.beam.sdk.transforms.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,6 +43,7 @@ public class TwitterProcessor {
         options.setMaxNumWorkers(3);
         String projectId = options.getProject();
         LOG.info("MERHABA");
+
         Pipeline pipeline = Pipeline.create(options);
         pipeline.apply("TweetsReadPubSub", PubsubIO.readStrings().fromTopic("projects/" + projectId + "/topics/twitter"))
                 .apply("ConvertDataToTableRows", ParDo.of(new DoFn<String, TableRow>() {
@@ -70,16 +70,13 @@ public class TwitterProcessor {
                                 JSONArray jsonTokens = new JSONArray();
                                 LOG.info("ESRA1");
 
-                                for (Token token : tokens) {
+                                for (Token token : tokens){
                                     JSONObject jsonToken = new JSONObject();
-                                    LOG.info("partOfSpeechX: " + token.getPartOfSpeech().getTag());
-                                    LOG.info("contentX: " + token.getText().getContent());
-
                                     jsonToken.put("partOfSpeech", token.getPartOfSpeech().getTag());
                                     jsonToken.put("content", token.getText().getContent());
                                     jsonTokens.add(jsonToken);
                                 }
-                                LOG.info("OUTPUTXX: " + "tweet_object: " + c.element() + "syntax: " + jsonTokens.toJSONString() + "score" + sentiment.getScore() + "magnitude" + sentiment.getMagnitude());
+                                LOG.info("OUTPUTXX: " + "tweet_object: " + c.element() + "syntax: " + jsonTokens.toJSONString());
                                 row.set("syntax", jsonTokens.toJSONString());
                             }
 
@@ -93,7 +90,7 @@ public class TwitterProcessor {
                 .apply("InsertToBigQuery", BigQueryIO
                         .writeTableRows()
                         .to(getTableReference(projectId))
-                        .withSchema(getTableSchema())
+                        .withSchema(getTableSchema(projectId))
                         .withCreateDisposition(BigQueryIO.Write.CreateDisposition.CREATE_IF_NEEDED)
                         .withWriteDisposition(BigQueryIO.Write.WriteDisposition.WRITE_APPEND)
                         .withoutValidation());
@@ -138,13 +135,10 @@ public class TwitterProcessor {
         return tableReference;
     }
 
-    private static TableSchema getTableSchema() {
-        List<TableFieldSchema> fields = new ArrayList<>();
-        fields.add(new TableFieldSchema().setName("syntax").setType("RECORD").setMode("REQUIRED")
-                .setFields(Arrays.asList(
-                        new TableFieldSchema().setName("partOfSpeech").setType("STRING").setMode("REQUIRED").setMode("REPEATED"),
-                        new TableFieldSchema().setName("content").setType("STRING").setMode("REQUIRED").setMode("REPEATED")
-                )));
-        return new TableSchema().setFields(fields);
+    private static TableSchema getTableSchema(String projectId) throws IOException, InterruptedException {
+        return BigqueryClient
+                .getClient(projectId)
+                .getTableResource(projectId,"twitter","tweets_raw")
+                .getSchema();
     }
 }
