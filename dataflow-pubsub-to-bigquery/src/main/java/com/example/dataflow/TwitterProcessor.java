@@ -46,28 +46,24 @@ public class TwitterProcessor {
         pipeline.apply("TweetsReadPubSub", PubsubIO.readStrings().fromTopic("projects/" + projectId + "/topics/twitter"))
                 .apply("ConvertDataToTableRows", ParDo.of(new DoFn<String, TableRow>() {
                     @ProcessElement
-                    public void processElement(ProcessContext c) {
+                    public void processElement(ProcessContext c) throws Exception {
                         TableRow row = new TableRow();
-                        try {
-                            JsonObject jsonTweet = new JsonParser().parse(c.element()).getAsJsonObject();
+                        JsonObject jsonTweet = new JsonParser().parse(c.element()).getAsJsonObject();
 
-                            if (jsonTweet != null
-                                    && (
-                                    jsonTweet.get("text") != null
-                                            && !jsonTweet.get("text").getAsString().isEmpty()
-                                            && jsonTweet.get("text").getAsString().toLowerCase().contains("stark"))
-                                    && (
-                                    jsonTweet.get("lang") != null
-                                            && !jsonTweet.get("lang").getAsString().isEmpty()
-                                            && jsonTweet.get("lang").getAsString().equalsIgnoreCase("en"))
-                            ) {
-                                List<Token> tokens = analyzeSyntaxText(jsonTweet.get("text").getAsString());
-                                String tokensJsonString = new Gson().toJson(tokens);
-                                row.set("tokens", tokensJsonString);
-                            }
-
-                        } catch (Exception e) {
-                            LOG.error(e.toString());
+                        if (jsonTweet != null
+                                && (
+                                jsonTweet.get("text") != null
+                                        && !jsonTweet.get("text").getAsString().isEmpty()
+                                        && jsonTweet.get("text").getAsString().toLowerCase().contains("stark"))
+                                && (
+                                jsonTweet.get("lang") != null
+                                        && !jsonTweet.get("lang").getAsString().isEmpty()
+                                        && jsonTweet.get("lang").getAsString().equalsIgnoreCase("en"))
+                        ) {
+                            List<Token> tokens = analyzeSyntaxText(jsonTweet.get("text").getAsString());
+                            String tokensJsonString = new Gson().toJson(tokens);
+                            row.set("tokens", tokensJsonString);
+                            c.output(row);
                         }
                         c.output(row);
                     }
@@ -108,7 +104,6 @@ public class TwitterProcessor {
     private static TableSchema getTableSchema() {
         List<TableFieldSchema> fields = new ArrayList<>();
         fields.add(new TableFieldSchema().setName("tokens").setType("STRING").setMode("REQUIRED"));
-        ;
         return new TableSchema().setFields(fields);
     }
 }
