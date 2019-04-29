@@ -6,7 +6,6 @@ RUN pip install --upgrade google-api-python-client
 RUN pip install python-dateutil
 
 ADD twitter-to-pubsub.py /twitter-to-pubsub.py
-ADD pubsub-to-bigquery.py /pubsub-to-bigquery.py
 ADD controller.py /controller.py
 ADD utils.py /utils.py
 
