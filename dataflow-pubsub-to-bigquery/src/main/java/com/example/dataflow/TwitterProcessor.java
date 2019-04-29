@@ -49,25 +49,18 @@ public class TwitterProcessor {
                 .apply("ConvertDataToTableRows", ParDo.of(new DoFn<String, TableRow>() {
                     @ProcessElement
                     public void processElement(ProcessContext c) {
-                        LOG.info("FATMA");
                         TableRow row = new TableRow();
                         try {
-                            LOG.info("TRLXYT: " + c.element());
 
                             JsonObject jsonTweet = new JsonParser().parse(c.element()).getAsJsonObject();
-
-                            LOG.info("MNXL: " + jsonTweet.get("text").getAsString());
 
                             if (jsonTweet != null && jsonTweet.get("text") != null && jsonTweet.get("lang") != null) {
 
                                 if ((jsonTweet.get("text").getAsString().toLowerCase().contains("besiktas")) && jsonTweet.get("lang").getAsString().equalsIgnoreCase("en")) {
 
-                                    LOG.info("Processing tweet: " + c.element());
-                                    LOG.info("Processingx: " + jsonTweet.get("text").getAsString());
                                     Sentiment sentiment = analyzeSentiment(jsonTweet.get("text").getAsString());
                                     List<Token> tokens = analyzeSyntaxText(jsonTweet.get("text").getAsString());
                                     JSONArray jsonTokens = new JSONArray();
-                                    LOG.info("ESRA1");
 
                                     for (Token token : tokens) {
                                         JSONObject jsonToken = new JSONObject();
