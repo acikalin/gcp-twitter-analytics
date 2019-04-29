@@ -53,16 +53,19 @@ public class TwitterProcessor {
                         TableRow row = new TableRow();
                         try {
                             LOG.info("TRLXYT: " + c.element());
-                            JsonObject jsonTweet = new JsonParser().parse(c.element()).getAsJsonObject();
-                            LOG.info("MNXL: " + jsonTweet.getAsJsonPrimitive("text").getAsString());
-                            if (jsonTweet != null && jsonTweet.getAsJsonPrimitive("text") != null && jsonTweet.getAsJsonPrimitive("lang") != null) {
 
-                                if ((jsonTweet.getAsJsonPrimitive("text").getAsString().toLowerCase().contains("besiktas")) && jsonTweet.getAsJsonPrimitive("lang").getAsString().equalsIgnoreCase("en")) {
+                            JsonObject jsonTweet = new JsonParser().parse(c.element()).getAsJsonObject();
+
+                            LOG.info("MNXL: " + jsonTweet.get("text").getAsString());
+
+                            if (jsonTweet != null && jsonTweet.get("text") != null && jsonTweet.get("lang") != null) {
+
+                                if ((jsonTweet.get("text").getAsString().toLowerCase().contains("besiktas")) && jsonTweet.get("lang").getAsString().equalsIgnoreCase("en")) {
 
                                     LOG.info("Processing tweet: " + c.element());
-                                    LOG.info("Processingx: " + jsonTweet.getAsJsonPrimitive("text").getAsString());
-                                    Sentiment sentiment = analyzeSentiment(jsonTweet.getAsJsonPrimitive("text").getAsString());
-                                    List<Token> tokens = analyzeSyntaxText(jsonTweet.getAsJsonPrimitive("text").getAsString());
+                                    LOG.info("Processingx: " + jsonTweet.get("text").getAsString());
+                                    Sentiment sentiment = analyzeSentiment(jsonTweet.get("text").getAsString());
+                                    List<Token> tokens = analyzeSyntaxText(jsonTweet.get("text").getAsString());
                                     JSONArray jsonTokens = new JSONArray();
                                     LOG.info("ESRA1");
 
