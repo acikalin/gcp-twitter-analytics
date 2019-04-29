@@ -50,8 +50,6 @@ public class TwitterProcessor {
                     @ProcessElement
                     public void processElement(ProcessContext c) {
                         TableRow row = new TableRow();
-                        LOG.info("SONUC: " + c.element());
-
                         try {
                             JsonObject jsonTweet = new JsonParser().parse(c.element()).getAsJsonObject();
 
@@ -91,7 +89,7 @@ public class TwitterProcessor {
                         } catch (Exception e) {
                             LOG.error("ERRORRRRRRR: " + e.toString());
                         }
-                        LOG.info("OUTPUTTRL: " + row);
+                        LOG.info("OUTPUTTRŞ: " + row);
                         c.output(row);
                     }
                 }))
