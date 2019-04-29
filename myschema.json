@@ -1,0 +1,19 @@
+[
+  {
+    "name": "syntax",
+    "type": "RECORD",
+    "mode": "REPEATED",
+    "fields": [
+      {
+        "name": "partOfSpeech",
+        "type": "STRING",
+        "mode": "REQUIRED"
+      },
+      {
+        "name": "content",
+        "type": "STRING",
+        "mode": "REQUIRED"
+      }
+    ]
+  }
+]

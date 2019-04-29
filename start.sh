@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PROJECT_ID=acikalin008
+PROJECT_ID=acikalin009
 gcloud config set project $PROJECT_ID
 gcloud config set compute/zone us-west1-a
 gcloud config set compute/region us-west1
@@ -15,6 +15,7 @@ gcloud container clusters get-credentials tweets --zone us-west1-a --project $PR
 kubectl create -f gcp-twitter-analytics/k8s-twitter-to-pubsub/twitter-stream.yaml
 ## Create the BigQuery dataset
 bq mk twitter
+bq mk --table twitter.tweets_raw gcp-twitter-analytics/myschema.json
 ## Create a staging bucket
 gsutil mb gs://$PROJECT_ID
 ## Launch the Dataflow Pipeline

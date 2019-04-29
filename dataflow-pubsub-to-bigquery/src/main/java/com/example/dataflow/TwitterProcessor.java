@@ -140,10 +140,10 @@ public class TwitterProcessor {
 
     private static TableSchema getTableSchema() {
         List<TableFieldSchema> fields = new ArrayList<>();
-        fields.add(new TableFieldSchema().setName("syntax").setType("RECORD").setMode("REQUIRED").setMode("REPEATED")
+        fields.add(new TableFieldSchema().setName("syntax").setType("RECORD").setMode("REQUIRED")
                 .setFields(Arrays.asList(
-                        new TableFieldSchema().setName("partOfSpeech").setType("STRING").setMode("REQUIRED"),
-                        new TableFieldSchema().setName("content").setType("STRING").setMode("REQUIRED")
+                        new TableFieldSchema().setName("partOfSpeech").setType("STRING").setMode("REQUIRED").setMode("REPEATED"),
+                        new TableFieldSchema().setName("content").setType("STRING").setMode("REQUIRED").setMode("REPEATED")
                 )));
         return new TableSchema().setFields(fields);
     }
