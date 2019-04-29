@@ -1,13 +1,12 @@
 package com.example.dataflow;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.google.cloud.language.v1.*;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import net.minidev.json.JSONArray;
-import net.minidev.json.JSONObject;
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO;
 import org.apache.beam.sdk.io.gcp.pubsub.PubsubIO;
 import org.apache.beam.sdk.io.gcp.testing.BigqueryClient;
@@ -42,14 +41,13 @@ public class TwitterProcessor {
         options.setAutoscalingAlgorithm(AutoscalingAlgorithmType.THROUGHPUT_BASED);
         options.setMaxNumWorkers(3);
         String projectId = options.getProject();
-        LOG.info("MERHABA");
 
         Pipeline pipeline = Pipeline.create(options);
         pipeline.apply("TweetsReadPubSub", PubsubIO.readStrings().fromTopic("projects/" + projectId + "/topics/twitter"))
                 .apply("ConvertDataToTableRows", ParDo.of(new DoFn<String, TableRow>() {
                     @ProcessElement
                     public void processElement(ProcessContext c) {
-                        TableRow row = new TableRow();
+                        TableRow outputRow = new TableRow();
                         try {
                             JsonObject jsonTweet = new JsonParser().parse(c.element()).getAsJsonObject();
 
@@ -63,28 +61,22 @@ public class TwitterProcessor {
                                             && !jsonTweet.get("lang").getAsString().isEmpty()
                                             && jsonTweet.get("lang").getAsString().equalsIgnoreCase("en"))
                             ) {
-                                Sentiment sentiment = analyzeSentiment(jsonTweet.get("text").getAsString());
-                                LOG.info("sentimentX: " + sentiment);
                                 List<Token> tokens = analyzeSyntaxText(jsonTweet.get("text").getAsString());
-                                LOG.info("tokensX: " + tokens.toString());
-                                JSONArray jsonTokens = new JSONArray();
-                                LOG.info("ESRA1");
+                                List<TableRow> surfaceFormList = new ArrayList();
 
                                 for (Token token : tokens){
-                                    JSONObject jsonToken = new JSONObject();
-                                    jsonToken.put("partOfSpeech", token.getPartOfSpeech().getTag());
-                                    jsonToken.put("content", token.getText().getContent());
-                                    jsonTokens.add(jsonToken);
+                                    TableRow nestedRow = new TableRow();
+                                    nestedRow.put("partOfSpeech", token.getPartOfSpeech().getTag());
+                                    nestedRow.put("content", token.getText().getContent());
+                                    surfaceFormList.add(nestedRow);
                                 }
-                                LOG.info("OUTPUTXX: " + "tweet_object: " + c.element() + "syntax: " + jsonTokens.toJSONString());
-                                row.set("syntax", jsonTokens.toJSONString());
+                                outputRow.set("syntax", surfaceFormList);
                             }
 
                         } catch (Exception e) {
-                            LOG.error("ERRORRRRRRR: " + e.toString());
+                            LOG.error(e.toString());
                         }
-                        LOG.info("OUTPUTTRŞ: " + row);
-                        c.output(row);
+                        c.output(outputRow);
                     }
                 }))
                 .apply("InsertToBigQuery", BigQueryIO
@@ -97,21 +89,7 @@ public class TwitterProcessor {
         pipeline.run();
     }
 
-    private static Sentiment analyzeSentiment(String text) throws Exception {
-        LOG.info("EMRAH1");
-        try (LanguageServiceClient language = LanguageServiceClient.create()) {
-            Document doc = Document.newBuilder()
-                    .setContent(text)
-                    .setType(Type.PLAIN_TEXT)
-                    .build();
-            AnalyzeSentimentResponse response = language.analyzeSentiment(doc);
-            LOG.info("EMRAH2");
-            return response.getDocumentSentiment();
-        }
-    }
-
     private static List<Token> analyzeSyntaxText(String text) throws Exception {
-        LOG.info("MEDET1");
         try (LanguageServiceClient language = LanguageServiceClient.create()) {
             Document doc = Document.newBuilder()
                     .setContent(text)
@@ -122,7 +100,6 @@ public class TwitterProcessor {
                     .setEncodingType(EncodingType.UTF16)
                     .build();
             AnalyzeSyntaxResponse response = language.analyzeSyntax(request);
-            LOG.info("MEDET2");
             return response.getTokensList();
         }
     }
