@@ -54,7 +54,7 @@ public class TwitterProcessor {
                         try {
                             LOG.info("TRLXYT: " + c.element());
                             JsonObject jsonTweet = new JsonParser().parse(c.element()).getAsJsonObject();
-
+                            LOG.info("MNXL: " + jsonTweet.getAsJsonPrimitive("text").getAsString());
                             if (jsonTweet != null && jsonTweet.getAsJsonPrimitive("text") != null && jsonTweet.getAsJsonPrimitive("lang") != null) {
 
                                 if ((jsonTweet.getAsJsonPrimitive("text").getAsString().toLowerCase().contains("besiktas")) && jsonTweet.getAsJsonPrimitive("lang").getAsString().equalsIgnoreCase("en")) {
